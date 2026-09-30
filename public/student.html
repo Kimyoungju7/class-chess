@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>오목 대전 - 학생</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand"><span class="dots"><i></i><i></i></span>우리 반 오목 대전</a>
+    <span class="spacer"></span>
+    <span id="meBox" class="muted"></span>
+    <a href="/tutorial.html" target="_blank" class="btn small ghost">📘 게임 방법</a>
+    <button id="logoutBtn" class="btn small ghost" hidden>나가기</button>
+  </header>
+
+  <main class="wrap">
+    <!-- 입장 -->
+    <section id="loginView" class="card narrow" hidden>
+      <h1>오목 대전 입장</h1>
+      <p class="muted">이름을 입력하면 친구와 자동으로 짝이 지어져요.</p>
+      <form id="loginForm" class="inline">
+        <input id="nameInput" type="text" maxlength="12" placeholder="이름 (예: 3번 김민준)" autocomplete="off" required>
+        <button class="btn primary">입장하기</button>
+      </form>
+      <p id="loginError" class="error"></p>
+    </section>
+
+    <!-- 로비 -->
+    <section id="lobbyView" hidden>
+      <div id="statusCard" class="card status-card"></div>
+      <div id="compCard" class="card" hidden>
+        <h3 id="compTitle"></h3>
+        <div id="compBody"></div>
+      </div>
+      <div class="card">
+        <h3>접속한 친구들 <span id="friendCount" class="muted small"></span></h3>
+        <div id="friends" class="chips"></div>
+      </div>
+    </section>
+
+    <!-- 게임 -->
+    <section id="gameView" hidden>
+      <div class="game-layout">
+        <div class="board-wrap">
+          <canvas id="board"></canvas>
+          <div id="resultOverlay" class="overlay" hidden>
+            <div class="result-box">
+              <div id="resultEmoji" class="big-emoji"></div>
+              <h2 id="resultTitle"></h2>
+              <p id="resultDesc" class="muted"></p>
+              <div class="row" style="justify-content:center">
+                <button id="againBtn" class="btn primary">다시 대전하기</button>
+                <button id="lobbyBtn" class="btn">로비로</button>
+              </div>
+              <button id="viewBoardBtn" class="btn small ghost" style="margin-top:10px">판 다시 보기</button>
+            </div>
+          </div>
+        </div>
+        <aside class="card">
+          <div id="gameLabel" class="badge blue"></div>
+          <div style="margin-top:12px">
+            <div id="rowBlack" class="player-row"><span class="stone b"></span><span class="name" id="nameBlack"></span><span id="offBlack" class="badge bad" hidden>연결 끊김</span></div>
+            <div id="rowWhite" class="player-row"><span class="stone w"></span><span class="name" id="nameWhite"></span><span id="offWhite" class="badge bad" hidden>연결 끊김</span></div>
+          </div>
+          <div id="turnMsg" class="turn-msg"></div>
+          <div id="timer" class="timer" hidden></div>
+          <div id="gameNotice"></div>
+          <p class="muted small" style="margin-top:12px">흑이 먼저 둬요. 가로·세로·대각선으로 5개를 먼저 이으면 승리!<br>태블릿에서는 같은 자리를 <b>두 번</b> 눌러야 돌이 놓여요.</p>
+          <button id="resignBtn" class="btn danger" style="width:100%">기권하기</button>
+          <button id="backResultBtn" class="btn" style="width:100%" hidden>결과 보기</button>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/common.js"></script>
+  <script src="/js/student.js"></script>
+</body>
+</html>

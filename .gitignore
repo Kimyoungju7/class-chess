@@ -1,0 +1,13 @@
+# 의존성
+node_modules/
+
+# 환경 변수 (교사 비밀번호 등)
+.env
+.env.*
+
+# 로그 / OS 파일
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
