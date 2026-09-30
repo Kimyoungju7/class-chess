@@ -20,10 +20,12 @@ const NEXT_MATCH_DELAY_MS = 5000;      // 대회에서 경기 종료 후 다음 
 const MATCH_GATHER_MS = 1500;          // 자유 매칭 시 대기자를 모았다가 무작위로 짝짓는 시간
 const HISTORY_LIMIT = 500;
 const MOVE_TIME_OPTIONS = [0, 15, 20, 30, 45, 60];
+// 인터넷에 배포했을 때의 공개 주소. Render는 RENDER_EXTERNAL_URL을 자동으로 넣어 준다.
+const PUBLIC_URL = String(process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_URL || '').replace(/\/+$/, '');
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
-app.get('/api/info', (req, res) => res.json({ addresses: lanAddresses() }));
+app.get('/api/info', (req, res) => res.json({ publicUrl: PUBLIC_URL || null, addresses: PUBLIC_URL ? [] : lanAddresses() }));
 
 const server = http.createServer(app);
 const io = new Server(server);
@@ -604,11 +606,16 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(line);
   console.log(' 우리 반 오목 대전 서버가 켜졌어요!');
   console.log(line);
-  console.log(' 학생 접속 주소 (같은 와이파이/네트워크):');
-  const addrs = lanAddresses();
-  if (addrs.length) addrs.forEach((a) => console.log('   ' + a));
-  else console.log(`   http://localhost:${PORT}`);
-  console.log(` 교사 화면: http://localhost:${PORT}/teacher.html`);
+  if (PUBLIC_URL) {
+    console.log(` 학생 접속 주소: ${PUBLIC_URL}`);
+    console.log(` 교사 화면: ${PUBLIC_URL}/teacher.html`);
+  } else {
+    console.log(' 학생 접속 주소 (같은 와이파이/네트워크):');
+    const addrs = lanAddresses();
+    if (addrs.length) addrs.forEach((a) => console.log('   ' + a));
+    else console.log(`   http://localhost:${PORT}`);
+    console.log(` 교사 화면: http://localhost:${PORT}/teacher.html`);
+  }
   console.log(` 교사 비밀번호: ${TEACHER_PIN}  (바꾸려면 TEACHER_PIN 환경변수 사용)`);
   console.log(' 끄려면 이 창에서 Ctrl + C');
   console.log(line);

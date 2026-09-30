@@ -27,8 +27,12 @@
   socket.on('disconnect', () => toast('서버와 연결이 끊겼어요. 서버 창이 켜져 있는지 확인하세요.', 'bad'));
   $('pinForm').addEventListener('submit', (e) => { e.preventDefault(); auth($('pinInput').value.trim(), false); });
 
+  // 학생 접속 주소: 공개 주소가 있으면 그것을, 교사가 localhost로 열었을 때만 PC의 네트워크 주소를,
+  // 그 밖에는 교사가 지금 연 주소(학생도 똑같이 접속 가능)를 보여 준다.
+  const isLocal = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
   fetch('/api/info').then((r) => r.json()).then((info) => {
-    const list = info.addresses && info.addresses.length ? info.addresses : [location.origin];
+    const list = info.publicUrl ? [info.publicUrl]
+      : isLocal && info.addresses && info.addresses.length ? info.addresses : [location.origin];
     $('addr').innerHTML = list.map((a) => `<b>${esc(a)}</b>`).join(' <span class="muted">또는</span> ');
   }).catch(() => { $('addr').innerHTML = `<b>${esc(location.origin)}</b>`; });
 

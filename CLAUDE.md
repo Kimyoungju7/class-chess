@@ -9,7 +9,10 @@
   - 포트: `PORT`, 기본 3000
   - 교사 비밀번호: `TEACHER_PIN`, 기본 `1234`
 - 학생 화면은 `/student.html`, 교사 화면은 `/teacher.html`, 게임 방법은 `/tutorial.html`
-- 서버 창에 학생 접속 주소(LAN IP)가 출력되고, `/api/info`도 같은 주소 목록을 돌려준다.
+- 서버 창에 학생 접속 주소가 출력되고, `/api/info`는 `{ publicUrl, addresses }`를 돌려준다.
+  - `PUBLIC_URL` 또는 `RENDER_EXTERNAL_URL`(Render가 자동 설정)이 있으면 그 공개 주소를 쓰고, 없으면 LAN IP 목록을 쓴다.
+  - 교사 화면은 공개 주소 → (localhost로 열었을 때만) LAN IP → `location.origin` 순서로 학생 접속 주소를 고른다.
+- 배포: `render.yaml`(Render Blueprint, 무료 요금제). 저장소는 https://github.com/Kimyoungju7/class-omok (공개, `main` 브랜치).
 
 ## 구조
 | 파일 | 역할 |
@@ -57,13 +60,13 @@
 2. **테스트 추가:** 봇 테스트를 `test/`로 옮기고 `socket.io-client`를 devDependency로 추가한다.
 3. 선택 사항(사용자가 원할 때만):
    - 3-3 금지 같은 렌주 규칙 옵션
-   - 기록을 파일(JSON)에 저장해서 서버를 재시작해도 유지하기
+   - 기록 영구 저장: Render 무료 요금제는 디스크가 유지되지 않으므로, 파일 저장이 아니라 외부 무료 DB가 필요하다
    - 학생 명단 미리 등록
-   - 외부 호스팅(Render 등) 배포
-4. 이 폴더는 아직 git 저장소가 아니다. 버전 관리가 필요하면 `git init`을 제안한다(`node_modules`는 제외).
+4. Render 배포 자체(가입, Blueprint 연결)는 사용자가 직접 한다. 배포 후 실제 주소에서 동작 확인이 필요하다.
 
 ## 주의할 점
-- **데이터는 메모리에만 있다.** 서버를 끄면 기록이 모두 사라지므로 교사에게 CSV 백업을 안내한다.
+- **데이터는 메모리에만 있다.** 서버를 끄면 기록이 모두 사라지므로 교사에게 CSV 백업을 안내한다. Render 무료 요금제는 15분 동안 접속이 없으면 잠들고, 이때도 기록이 사라진다.
+- **GitHub:** `gh`는 Bash PATH에 없다. `"C:\Program Files\GitHub CLI\gh.exe"`로 실행한다(로그인 계정 Kimyoungju7). 저장소가 공개이므로 비밀번호·학생 정보·`.env`를 커밋하지 않는다.
 - **네트워크:** 학생과 교사 PC가 같은 네트워크에 있어야 한다. 처음 실행할 때 Windows 방화벽에서 Node를 허용해야 한다. 학교망이 기기끼리의 통신을 막으면 접속이 안 될 수 있다.
 - **HTTP(비보안) 환경:** LAN 접속은 HTTP라서 `crypto.randomUUID` 같은 보안 컨텍스트 전용 API를 쓰면 안 된다. 토큰은 `Omok.randomToken()`을 쓴다. localStorage와 sessionStorage 접근은 항상 try/catch로 감싼다(`Omok.store`).
 - **XSS 방지:** 학생 이름은 사용자가 입력한 값이다. innerHTML에 넣을 때는 반드시 `Omok.esc()`를 거친다.

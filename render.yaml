@@ -1,0 +1,11 @@
+# Render 배포 설정 (Blueprint). Render에서 New → Blueprint 로 이 저장소를 고르면 자동으로 설정돼요.
+services:
+  - type: web
+    name: class-omok
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: TEACHER_PIN   # 교사 비밀번호. 배포할 때 Render가 값을 물어봐요.
+        sync: false
