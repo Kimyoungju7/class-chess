@@ -25,6 +25,8 @@ const PUBLIC_URL = String(process.env.PUBLIC_URL || process.env.RENDER_EXTERNAL_
 
 const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
+// 게임 방법의 연습 게임(브라우저 안에서만 진행, 기록 안 함)이 쓰는 체스 규칙 라이브러리
+app.get('/vendor/chess.js', (req, res) => res.sendFile(require.resolve('chess.js/dist/esm/chess.js')));
 app.get('/api/info', (req, res) => res.json({ publicUrl: PUBLIC_URL || null, addresses: PUBLIC_URL ? [] : lanAddresses() }));
 
 const server = http.createServer(app);

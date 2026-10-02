@@ -19,6 +19,7 @@
       <button class="tab" data-tab="pieces">② 말의 움직임</button>
       <button class="tab" data-tab="check">③ 체크와 체크메이트</button>
       <button class="tab" data-tab="special">④ 특별한 규칙</button>
+      <button class="tab" data-tab="practice">⑤ 연습 게임</button>
     </nav>
 
     <!-- ① 규칙 -->
@@ -72,11 +73,37 @@
     <!-- ④ 특별한 규칙 -->
     <section data-panel="special" hidden>
       <div class="pattern-grid" id="specialGrid"></div>
-      <div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn primary" href="/student.html">🎮 이제 대전하러 가기 →</a></div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" data-go="practice">다음: 연습 게임 →</button></div>
+    </section>
+
+    <!-- ⑤ 연습 게임 -->
+    <section data-panel="practice" hidden>
+      <div class="lesson-layout">
+        <div class="board-wrap"><canvas id="aiBoard"></canvas></div>
+        <div class="card">
+          <h2>컴퓨터와 연습하기</h2>
+          <div class="row">
+            <label>난이도
+              <select id="aiLevel"><option value="easy">쉬움</option><option value="normal">보통</option></select>
+            </label>
+            <label>내 말
+              <select id="aiColor"><option value="w">백 (먼저)</option><option value="b">흑 (나중)</option></select>
+            </label>
+          </div>
+          <div id="aiMsg" class="turn-msg"></div>
+          <div class="row">
+            <button class="btn primary" id="aiNew">새 게임</button>
+            <button class="btn" id="aiUndo">↩ 무르기</button>
+          </div>
+          <p class="muted small" style="margin-top:12px">말을 누르면 갈 수 있는 칸이 파란 점으로 보여요. 연습 게임은 기록에 남지 않아요. 무르기도 마음껏 써 보세요!</p>
+          <a class="btn" href="/student.html" style="width:100%;margin-top:6px">🎮 친구와 대전하러 가기</a>
+        </div>
+      </div>
     </section>
   </main>
 
   <script src="/js/common.js"></script>
   <script src="/js/tutorial.js"></script>
+  <script type="module" src="/js/practice.js"></script>
 </body>
 </html>

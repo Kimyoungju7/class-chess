@@ -45,6 +45,28 @@
     cells[f] = '';
   }
 
+  // 프로모션 고르기 창. 고르면 done('q'|'r'|'b'|'n'), 취소하면 done(null). 닫는 함수를 돌려준다.
+  const PROMOS = [['q', '퀸'], ['r', '룩'], ['b', '비숍'], ['n', '나이트']];
+  function pickPromotion(white, done) {
+    const box = document.createElement('div');
+    box.className = 'modal';
+    box.innerHTML = `<div class="promo-box">
+      <h3>폰이 무엇으로 변신할까요?</h3>
+      <div class="promo-list">${PROMOS.map(([p, n]) =>
+        `<button class="promo-btn" data-p="${p}"><span class="piece ${white ? 'w' : 'b'}">${GLYPH[p]}&#xFE0E;</span>${n}</button>`).join('')}</div>
+      <button class="btn small ghost" data-p="">취소</button>
+    </div>`;
+    let closed = false;
+    const close = (p) => { if (closed) return; closed = true; box.remove(); done(p); };
+    box.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-p]');
+      if (b) close(b.dataset.p || null);
+      else if (e.target === box) close(null);
+    });
+    document.body.appendChild(box);
+    return () => close(null);
+  }
+
   class ChessBoard {
     constructor(canvas, opts = {}) {
       this.canvas = canvas;
@@ -97,7 +119,10 @@
 
     setInteractive(on) {
       this.interactive = on;
-      if (!on) this.selected = null;
+      if (!on) {
+        this.selected = null;
+        if (this._closePicker) this._closePicker(); // 고르는 중에 경기가 끝나거나 시간이 지나면 닫는다
+      }
       this.canvas.style.cursor = 'default';
       this.draw();
     }
@@ -133,17 +158,28 @@
       if (!sq) return;
       const mv = this.selected && this._find(this.selected, sq);
       if (mv) {
-        // 프로모션은 퀸으로 자동 변신 (목록에 e7e8q, e7e8r … 이 모두 있으므로 q를 보낸다)
         const from = this.selected;
-        const promotion = mv.length > 4 ? 'q' : undefined;
-        this.selected = null;
-        this.interactive = false; // 서버 응답이 올 때까지 다시 두지 못하게
-        this.draw();
-        if (this.onMove) this.onMove(from, sq, promotion);
+        if (mv.length > 4) { // 프로모션: 무엇으로 변신할지 고른 뒤에 둔다
+          const white = this.cells[sqIndex(from)] === this.cells[sqIndex(from)].toUpperCase();
+          this._closePicker = pickPromotion(white, (p) => {
+            this._closePicker = null;
+            if (p && this.interactive && this.selected === from) this._send(from, sq, p);
+            else { this.selected = null; this.draw(); }
+          });
+          return;
+        }
+        this._send(from, sq);
         return;
       }
       this.selected = sq !== this.selected && this.legal.some((m) => m.startsWith(sq)) ? sq : null;
       this.draw();
+    }
+
+    _send(from, to, promotion) {
+      this.selected = null;
+      this.interactive = false; // 응답이 올 때까지 다시 두지 못하게
+      this.draw();
+      if (this.onMove) this.onMove(from, to, promotion);
     }
 
     _rect(sq) {
