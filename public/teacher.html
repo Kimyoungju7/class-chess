@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>오목 대전 - 선생님</title>
+  <title>체스 대전 - 선생님</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a href="/" class="brand"><span class="dots"><i></i><i></i></span>우리 반 오목 대전 · 선생님</a>
+    <a href="/" class="brand"><span class="dots"><i></i><i></i></span>우리 반 체스 대전 · 선생님</a>
     <span class="spacer"></span>
     <span id="modeBadge" class="badge blue"></span>
     <a href="/tutorial.html" target="_blank" class="btn small ghost">📘 게임 방법 (수업용)</a>
@@ -134,7 +134,7 @@
           </div>
           <div class="table-scroll" style="margin-top:12px">
             <table class="table">
-              <thead><tr><th>시간</th><th class="left">구분</th><th class="left">흑</th><th class="left">백</th><th>결과</th><th>수</th><th>사유</th><th></th></tr></thead>
+              <thead><tr><th>시간</th><th class="left">구분</th><th class="left">백</th><th class="left">흑</th><th>결과</th><th>수</th><th>사유</th><th></th></tr></thead>
               <tbody id="histBody"></tbody>
             </table>
           </div>
@@ -158,6 +158,7 @@
         <div class="m-board"><canvas id="mCanvas"></canvas></div>
         <div>
           <div id="mInfo"></div>
+          <label class="small" style="display:block;margin-top:10px"><input type="checkbox" id="mFlip"> 판 뒤집기 (흑 쪽에서 보기)</label>
           <div id="mReplay" hidden style="margin-top:14px">
             <input type="range" id="mSlider" min="0" value="0">
             <div class="row" style="justify-content:center;margin-top:6px">
@@ -169,7 +170,6 @@
             </div>
             <div class="row" style="justify-content:center;margin-top:6px">
               <button class="btn small" id="mPlay">▶ 자동 재생</button>
-              <label class="small"><input type="checkbox" id="mNumbers"> 수순 번호</label>
             </div>
           </div>
           <div id="mActions" style="margin-top:16px"></div>

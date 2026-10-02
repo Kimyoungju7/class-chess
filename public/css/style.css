@@ -124,6 +124,7 @@ form.inline input { flex: 1; min-width: 160px; }
 .player-row .stone { width: 22px; height: 22px; }
 .turn-msg { text-align: center; font-weight: 800; font-size: 1.15rem; margin: 12px 0; }
 .turn-msg.mine { color: var(--accent); }
+.turn-msg.check { color: var(--bad); background: var(--bad-soft); border-radius: 10px; padding: 8px; }
 .timer { text-align: center; font-size: 1.6rem; font-weight: 800; font-variant-numeric: tabular-nums; }
 .timer.low { color: var(--bad); }
 .overlay {

@@ -1,6 +1,6 @@
 'use strict';
 /**
- * 우리 반 오목 대전 서버
+ * 우리 반 체스 대전 서버
  * - 학생: 이름으로 입장 → 자유 모드에서는 자동 랜덤 매칭, 대회 모드에서는 대진표에 따라 자동 배정
  * - 교사: 실시간 경기 관전, 학생 현황, 리그전/토너먼트 운영, 경기 기록 다시보기
  * 모든 데이터는 메모리에 저장되며 서버를 끄면 초기화됩니다.
@@ -11,10 +11,10 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 const { Server } = require('socket.io');
+const { Chess } = require('chess.js');
 
 const PORT = Number(process.env.PORT) || 3000;
 const TEACHER_PIN = String(process.env.TEACHER_PIN || '1234');
-const SIZE = 15;
 const DISCONNECT_GRACE_MS = 60 * 1000; // 경기 중 연결이 끊긴 뒤 기권 처리까지 기다리는 시간
 const NEXT_MATCH_DELAY_MS = 5000;      // 대회에서 경기 종료 후 다음 경기까지 쉬는 시간
 const MATCH_GATHER_MS = 1500;          // 자유 매칭 시 대기자를 모았다가 무작위로 짝짓는 시간
@@ -58,18 +58,22 @@ function shuffle(a) {
   return a;
 }
 
-function findWin(board, x, y, color) {
-  for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
-    const line = [[x, y]];
-    for (const s of [1, -1]) {
-      let cx = x + dx * s, cy = y + dy * s;
-      while (cx >= 0 && cy >= 0 && cx < SIZE && cy < SIZE && board[cy * SIZE + cx] === color) {
-        line.push([cx, cy]);
-        cx += dx * s; cy += dy * s;
-      }
-    }
-    if (line.length >= 5) return line;
-  }
+// ───────────────────────── 체스 규칙 (chess.js) ─────────────────────────
+// 경기의 색 번호: 1 = 흑, 2 = 백. 체스는 백이 먼저 둔다.
+const SQUARE = /^[a-h][1-8]$/;
+const colorNum = (c) => (c === 'w' ? 2 : 1);
+
+function legalMoves(g) {
+  return g.status === 'playing' ? g.chess.moves({ verbose: true }).map((m) => m.lan) : [];
+}
+
+// 방금 둔 쪽(mover) 기준으로 경기가 끝났는지 본다. [승자, 사유] 또는 null
+function chessResult(chess, mover) {
+  if (chess.isCheckmate()) return [mover, 'checkmate'];
+  if (chess.isStalemate()) return [0, 'stalemate'];
+  if (chess.isInsufficientMaterial()) return [0, 'insufficient'];
+  if (chess.isThreefoldRepetition()) return [0, 'repetition'];
+  if (chess.isDrawByFiftyMoves()) return [0, 'fifty'];
   return null;
 }
 
@@ -97,6 +101,7 @@ function gameView(g) {
     moves: g.moves, turn: g.turn, status: g.status, winner: g.winner, reason: g.reason, winLine: g.winLine,
     startedAt: g.startedAt, endedAt: g.endedAt, moveTime: g.moveTime, label: g.label, matchId: g.matchId,
     remainingMs: g.deadline ? Math.max(0, g.deadline - Date.now()) : null,
+    inCheck: g.chess.inCheck(), legal: legalMoves(g),
   };
 }
 
@@ -163,7 +168,7 @@ function startGame(aId, bId, match) {
   const bp = players.get(blackId), wp = players.get(whiteId);
   const g = {
     id: newId(), black: blackId, white: whiteId, blackName: bp.name, whiteName: wp.name,
-    board: new Array(SIZE * SIZE).fill(0), moves: [], turn: 1, status: 'playing',
+    chess: new Chess(), moves: [], turn: 2, status: 'playing',
     winner: 0, reason: '', winLine: null, startedAt: Date.now(), endedAt: null,
     deadline: null, timer: null, moveTime: settings.moveTime,
     matchId: match ? match.id : null, label: match ? matchLabel(match) : '자유 대전',
@@ -476,16 +481,16 @@ io.on('connection', (socket) => {
     if (!g || g.status !== 'playing') return;
     const color = g.black === p.id ? 1 : g.white === p.id ? 2 : 0;
     if (color !== g.turn) return;
-    const x = Number(data.x), y = Number(data.y);
-    if (!Number.isInteger(x) || !Number.isInteger(y) || x < 0 || y < 0 || x >= SIZE || y >= SIZE) return;
-    if (g.board[y * SIZE + x]) return;
+    const from = String(data.from), to = String(data.to);
+    if (!SQUARE.test(from) || !SQUARE.test(to)) return;
+    const promotion = /^[qrbn]$/.test(data.promotion) ? data.promotion : undefined;
+    let mv;
+    try { mv = g.chess.move({ from, to, promotion }); } catch { return; } // 규칙에 맞지 않는 수
 
-    g.board[y * SIZE + x] = color;
-    g.moves.push([x, y]);
-    const line = findWin(g.board, x, y, color);
-    if (line) return endGame(g, color, 'five', line);
-    if (g.moves.length === SIZE * SIZE) return endGame(g, 0, 'full');
-    g.turn = 3 - color;
+    g.moves.push(mv.lan);
+    const result = chessResult(g.chess, color);
+    if (result) return endGame(g, result[0], result[1]);
+    g.turn = colorNum(g.chess.turn());
     resetTimer(g);
     emitGame(g);
     broadcast();
@@ -604,7 +609,7 @@ io.on('connection', (socket) => {
 server.listen(PORT, '0.0.0.0', () => {
   const line = '─'.repeat(52);
   console.log(line);
-  console.log(' 우리 반 오목 대전 서버가 켜졌어요!');
+  console.log(' 우리 반 체스 대전 서버가 켜졌어요!');
   console.log(line);
   if (PUBLIC_URL) {
     console.log(` 학생 접속 주소: ${PUBLIC_URL}`);

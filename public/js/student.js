@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const { esc, REASONS, OmokBoard, renderStandings, renderBracket, toast, randomToken, store } = Omok;
+  const { esc, REASONS, ChessBoard, renderStandings, renderBracket, toast, randomToken, store } = Omok;
   const $ = (id) => document.getElementById(id);
 
   const socket = io();
@@ -15,10 +15,10 @@
   let resignArmedUntil = 0;
   let blocked = false;        // 퇴장/중복 접속으로 연결이 끊긴 상태
 
-  const board = new OmokBoard($('board'), {
-    size: 15,
-    onPlace: (x, y) => socket.emit('game:move', { x, y }),
+  const board = new ChessBoard($('board'), {
+    onMove: (from, to, promotion) => socket.emit('game:move', { from, to, promotion }),
   });
+  let checkSeen = -1; // 체크 알림을 띄운 수 번호 (같은 체크로 여러 번 알리지 않게)
 
   // ── 입장 ──
   function join(name, silent) {
@@ -106,8 +106,8 @@
         $('cancelQueue').onclick = () => socket.emit('queue:leave');
       } else {
         card.innerHTML = `
-          <div class="big-emoji">⚫⚪</div>
-          <h2>오목 한 판 할까요?</h2>
+          <div class="big-emoji">♟️</div>
+          <h2>체스 한 판 할까요?</h2>
           <p class="muted">버튼을 누르면 기다리는 친구 중 한 명과 무작위로 짝이 지어져요.</p>
           <button class="btn primary big" id="findBtn">대전 찾기</button>`;
         $('findBtn').onclick = () => socket.emit('queue:join');
@@ -183,9 +183,15 @@
     const playing = g.status === 'playing';
     const myTurn = playing && g.turn === myColor;
 
+    board.flipped = myColor === 1; // 내 말이 아래쪽에 오도록
+    board.check = g.inCheck;
     board.setMoves(g.moves);
-    board.winLine = g.winLine;
-    board.setInteractive(myTurn, myColor);
+    board.setLegal(myTurn ? g.legal : []);
+    board.setInteractive(myTurn);
+    if (playing && g.inCheck && checkSeen !== g.moves.length) {
+      checkSeen = g.moves.length;
+      toast(myTurn ? '체크! 내 킹이 공격받고 있어요' : '체크! 상대 킹을 공격했어요', myTurn ? 'bad' : 'good');
+    }
 
     $('gameLabel').textContent = g.label || '자유 대전';
     $('nameBlack').textContent = g.blackName + (myColor === 1 ? ' (나)' : '');
@@ -196,8 +202,10 @@
     $('offWhite').hidden = g.whiteOnline;
 
     const tm = $('turnMsg');
-    tm.className = 'turn-msg' + (myTurn ? ' mine' : '');
-    tm.textContent = playing ? (myTurn ? '👉 내 차례예요! 돌을 놓으세요' : '상대가 생각하는 중…') : '경기 종료';
+    tm.className = 'turn-msg' + (myTurn ? ' mine' : '') + (playing && g.inCheck ? ' check' : '');
+    tm.textContent = !playing ? '경기 종료'
+      : myTurn ? (g.inCheck ? '⚠️ 체크! 킹을 지켜야 해요' : '👉 내 차례예요! 말을 움직이세요')
+        : (g.inCheck ? '체크! 상대 킹이 공격받고 있어요' : '상대가 생각하는 중…');
 
     const oppOnline = myColor === 1 ? g.whiteOnline : g.blackOnline;
     $('gameNotice').innerHTML = playing && !oppOnline
@@ -211,10 +219,12 @@
     ov.hidden = playing || overlayHidden;
     if (!playing) {
       let emoji, title;
+      const mate = g.reason === 'checkmate';
       if (g.reason === 'cancel') { emoji = '🚫'; title = '무효 경기'; }
+      else if (g.reason === 'stalemate') { emoji = '🤝'; title = '스테일메이트 · 무승부'; }
       else if (g.winner === 0) { emoji = '🤝'; title = '무승부'; }
-      else if (g.winner === myColor) { emoji = '🎉'; title = '승리!'; }
-      else { emoji = '😢'; title = '아쉬운 패배'; }
+      else if (g.winner === myColor) { emoji = '🎉'; title = mate ? '체크메이트! 승리!' : '승리!'; }
+      else { emoji = '😢'; title = mate ? '체크메이트… 아쉬운 패배' : '아쉬운 패배'; }
       $('resultEmoji').textContent = emoji;
       $('resultTitle').textContent = title;
       let desc = `${REASONS[g.reason] || ''} · ${g.moves.length}수`;

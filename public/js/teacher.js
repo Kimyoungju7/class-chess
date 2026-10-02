@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  const { esc, REASONS, OmokBoard, renderStandings, renderBracket, toast, fmtTime } = Omok;
+  const { esc, REASONS, ChessBoard, renderStandings, renderBracket, toast, fmtTime } = Omok;
   const $ = (id) => document.getElementById(id);
 
   const socket = io();
@@ -125,14 +125,15 @@
         el.innerHTML = '<canvas></canvas><div class="live-info"></div>';
         el.addEventListener('click', () => openGame(g.id));
         grid.appendChild(el);
-        c = { el, board: new OmokBoard(el.querySelector('canvas'), { size: 15 }) };
+        c = { el, board: new ChessBoard(el.querySelector('canvas'), { coords: false }) };
         liveCards.set(g.id, c);
       }
+      c.board.check = g.inCheck;
       c.board.setMoves(g.moves);
       const off = [!g.blackOnline && g.blackName, !g.whiteOnline && g.whiteName].filter(Boolean);
       c.el.querySelector('.live-info').innerHTML = `
-        <div class="vs"><span class="stone b"></span>${esc(g.blackName)} <span class="muted">vs</span> <span class="stone w"></span>${esc(g.whiteName)}</div>
-        <div class="muted small">${esc(g.label)} · ${g.moves.length}수 · ${g.turn === 1 ? '흑' : '백'} 차례</div>
+        <div class="vs"><span class="stone w"></span>${esc(g.whiteName)} <span class="muted">vs</span> <span class="stone b"></span>${esc(g.blackName)}</div>
+        <div class="muted small">${esc(g.label)} · ${g.moves.length}수 · ${g.turn === 1 ? '흑' : '백'} 차례${g.inCheck ? ' <span class="badge bad">체크</span>' : ''}</div>
         ${off.length ? `<span class="badge bad">연결 끊김: ${off.map(esc).join(', ')}</span>` : ''}`;
     }
   }
@@ -318,7 +319,7 @@
     $('histBody').innerHTML = list.map((g) => `
       <tr class="clickable" data-game="${g.id}">
         <td>${fmtTime(g.endedAt)}</td><td class="left">${esc(g.label)}</td>
-        <td class="left">${esc(g.blackName)}</td><td class="left">${esc(g.whiteName)}</td>
+        <td class="left">${esc(g.whiteName)}</td><td class="left">${esc(g.blackName)}</td>
         <td>${esc(resultText(g))}</td><td>${g.moves.length}</td><td>${esc(REASONS[g.reason] || '')}</td>
         <td><button class="btn small">다시보기</button></td>
       </tr>`).join('');
@@ -342,17 +343,17 @@
   const today = () => new Date().toISOString().slice(0, 10);
   $('csvGames').addEventListener('click', () => {
     if (!S) return;
-    download(`오목_경기기록_${today()}.csv`, [['종료시각', '구분', '흑', '백', '결과', '수', '사유'],
-      ...S.history.map((g) => [new Date(g.endedAt).toLocaleString('ko-KR'), g.label, g.blackName, g.whiteName, resultText(g), g.moves.length, REASONS[g.reason] || ''])]);
+    download(`체스_경기기록_${today()}.csv`, [['종료시각', '구분', '백', '흑', '결과', '수', '사유'],
+      ...S.history.map((g) => [new Date(g.endedAt).toLocaleString('ko-KR'), g.label, g.whiteName, g.blackName, resultText(g), g.moves.length, REASONS[g.reason] || ''])]);
   });
   $('csvStudents').addEventListener('click', () => {
     if (!S) return;
-    download(`오목_학생전적_${today()}.csv`, [['이름', '경기', '승', '패', '무', '승률(%)'],
+    download(`체스_학생전적_${today()}.csv`, [['이름', '경기', '승', '패', '무', '승률(%)'],
       ...S.players.map((p) => { const n = p.wins + p.losses + p.draws; return [p.name, n, p.wins, p.losses, p.draws, n ? Math.round((p.wins / n) * 100) : '']; })]);
   });
 
   // ── 관전 / 다시보기 ──
-  const mBoard = new OmokBoard($('mCanvas'), { size: 15 });
+  const mBoard = new ChessBoard($('mCanvas'));
   let modal = null;
   let playTimer = null;
   const findGame = (id) => S && (S.live.find((g) => g.id === id) || S.history.find((g) => g.id === id));
@@ -373,17 +374,18 @@
     const g = findGame(modal.gameId);
     if (!g) { closeModal(); return; }
     const live = g.status === 'playing';
-    $('mTitle').textContent = `${g.label} · ${g.blackName} vs ${g.whiteName}`;
+    $('mTitle').textContent = `${g.label} · ${g.whiteName} vs ${g.blackName}`;
     const turnRow = (c, name, online) => `<div class="player-row ${live && g.turn === c ? 'turn' : ''}"><span class="stone ${c === 1 ? 'b' : 'w'}"></span><span class="name">${esc(name)}</span>${online ? '' : '<span class="badge bad">연결 끊김</span>'}</div>`;
-    $('mInfo').innerHTML = turnRow(1, g.blackName, g.blackOnline || !live) + turnRow(2, g.whiteName, g.whiteOnline || !live)
+    $('mInfo').innerHTML = turnRow(2, g.whiteName, g.whiteOnline || !live) + turnRow(1, g.blackName, g.blackOnline || !live)
+      + (live && g.inCheck ? '<div class="turn-msg check">체크!</div>' : '')
       + (live ? `<p class="muted small" style="margin-top:8px">${g.moves.length}수 진행 · 실시간으로 업데이트돼요</p>`
         : `<p style="margin-top:8px"><b>${esc(resultText(g))}</b> · ${esc(REASONS[g.reason] || '')} · ${g.moves.length}수</p>`);
 
     $('mReplay').hidden = live;
-    mBoard.showNumbers = !live && $('mNumbers').checked;
+    mBoard.flipped = $('mFlip').checked;
     if (live) {
       modal.step = null;
-      mBoard.winLine = null;
+      mBoard.check = g.inCheck;
       mBoard.setMoves(g.moves);
       const kb = 'end:' + g.id + ':black', kw = 'end:' + g.id + ':white', kd = 'end:' + g.id + ':draw', kc = 'end:' + g.id + ':cancel';
       armActions.set(kb, () => send('teacher:endGame', { gameId: g.id, result: 'black' }));
@@ -402,7 +404,7 @@
       $('mSlider').max = n;
       $('mSlider').value = modal.step;
       $('mStep').textContent = `${modal.step} / ${n}수`;
-      mBoard.winLine = modal.step === n ? g.winLine : null;
+      mBoard.check = modal.step === n && g.inCheck; // 중간 수의 체크 여부는 기록에 없어 마지막 수에만 표시
       mBoard.setMoves(g.moves, modal.step);
     }
   }
@@ -413,7 +415,7 @@
   $('mLast').addEventListener('click', () => { if (modal) { modal.step = 1e9; updateModal(); } });
   $('mPrev').addEventListener('click', () => step(-1));
   $('mNext').addEventListener('click', () => step(1));
-  $('mNumbers').addEventListener('change', updateModal);
+  $('mFlip').addEventListener('change', updateModal);
   function stopPlay() { clearInterval(playTimer); playTimer = null; $('mPlay').textContent = '▶ 자동 재생'; }
   $('mPlay').addEventListener('click', () => {
     if (playTimer) return stopPlay();

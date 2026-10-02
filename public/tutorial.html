@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>오목 게임 방법 배우기</title>
+  <title>체스 게임 방법 배우기</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <a href="/" class="brand"><span class="dots"><i></i><i></i></span>오목 게임 방법 배우기</a>
+    <a href="/" class="brand"><span class="dots"><i></i><i></i></span>체스 게임 방법 배우기</a>
     <span class="spacer"></span>
     <a href="/student.html" class="btn small primary">🎮 대전하러 가기</a>
   </header>
@@ -16,113 +16,63 @@
   <main class="wrap">
     <nav class="tabs" id="lessonTabs">
       <button class="tab active" data-tab="rules">① 기본 규칙</button>
-      <button class="tab" data-tab="sim">② 한 판 따라보기</button>
-      <button class="tab" data-tab="patterns">③ 이기는 모양</button>
-      <button class="tab" data-tab="quiz">④ 문제 풀기</button>
-      <button class="tab" data-tab="ai">⑤ 컴퓨터와 연습</button>
+      <button class="tab" data-tab="pieces">② 말의 움직임</button>
+      <button class="tab" data-tab="check">③ 체크와 체크메이트</button>
+      <button class="tab" data-tab="special">④ 특별한 규칙</button>
     </nav>
 
     <!-- ① 규칙 -->
     <section data-panel="rules">
       <div class="card">
-        <h2>오목은 이렇게 해요</h2>
+        <h2>체스는 이렇게 해요</h2>
         <ul class="rule-list">
-          <li><span class="num">1</span><div>가로·세로 15줄 판에서, <b>줄과 줄이 만나는 점(교차점)</b>에 돌을 놓아요.</div></li>
-          <li><span class="num">2</span><div><b>흑(검은 돌)이 먼저</b> 두고, 흑과 백이 <b>한 개씩 번갈아</b> 둬요. 누가 흑인지는 무작위로 정해져요.</div></li>
-          <li><span class="num">3</span><div>내 돌 <b>5개를 먼저 한 줄로</b> 이으면 승리! <b>가로, 세로, 대각선</b> 모두 괜찮아요.</div></li>
-          <li><span class="num">4</span><div>한 번 놓은 돌은 <b>옮기거나 뺄 수 없어요</b>. 신중하게!</div></li>
-          <li><span class="num">5</span><div>우리 반 규칙: 6개 이상 이어도 승리로 인정하고, 특별한 금지 수(금수)는 없어요.</div></li>
-          <li><span class="num">6</span><div>선생님이 <b>제한 시간</b>을 정하면, 시간 안에 두지 못하면 져요. 태블릿에서는 같은 자리를 <b>두 번</b> 눌러야 돌이 놓여요.</div></li>
+          <li><span class="num">1</span><div>가로·세로 8칸, 모두 <b>64칸</b>인 판에서 해요. 백과 흑이 각각 <b>말 16개</b>를 가지고 시작해요.</div></li>
+          <li><span class="num">2</span><div><b>백(흰 말)이 먼저</b> 움직이고, 한 번에 <b>말 하나씩 번갈아</b> 움직여요. 누가 백인지는 무작위로 정해져요.</div></li>
+          <li><span class="num">3</span><div>상대 말이 있는 칸으로 가면 그 말을 <b>잡을 수 있어요</b>. 잡힌 말은 판에서 빠져요.</div></li>
+          <li><span class="num">4</span><div>상대 <b>킹</b>을 공격해서 도망칠 곳이 하나도 없게 만들면 승리! 이것을 <b>체크메이트</b>라고 해요.</div></li>
+          <li><span class="num">5</span><div>내 차례에 말을 누르면 갈 수 있는 칸이 <span style="color:#1e6ae1">●</span> <b>파란 점</b>으로 보여요. 그 칸을 누르면 말이 움직여요. 잡을 수 있는 말에는 파란 <b>동그라미</b>가 생겨요.</div></li>
+          <li><span class="num">6</span><div>선생님이 <b>제한 시간</b>을 정하면, 시간 안에 두지 못하면 져요.</div></li>
         </ul>
       </div>
       <div class="card">
-        <h3>이런 모양이면 승리!</h3>
-        <div class="mini-boards">
-          <figure><canvas id="ruleH"></canvas><figcaption>가로 5개</figcaption></figure>
-          <figure><canvas id="ruleV"></canvas><figcaption>세로 5개</figcaption></figure>
-          <figure><canvas id="ruleD"></canvas><figcaption>대각선 5개</figcaption></figure>
-          <figure><canvas id="ruleX"></canvas><figcaption>4개 + 막힘 → 아직 승리 아님</figcaption></figure>
+        <h3>처음 배치</h3>
+        <div class="mini-boards" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));align-items:start">
+          <figure><canvas id="startBoard"></canvas><figcaption>아래쪽이 백, 위쪽이 흑</figcaption></figure>
+          <div>
+            <ul class="rule-list" id="pieceNames"></ul>
+          </div>
         </div>
       </div>
-      <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" data-go="sim">다음: 한 판 따라보기 →</button></div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" data-go="pieces">다음: 말의 움직임 →</button></div>
     </section>
 
-    <!-- ② 시뮬레이션 -->
-    <section data-panel="sim" hidden>
-      <div class="lesson-layout">
-        <div class="board-wrap"><canvas id="simBoard"></canvas></div>
-        <div class="card">
-          <h2>한 판 따라보기</h2>
-          <div class="narration" id="simText"></div>
-          <input type="range" id="simSlider" min="0" value="0">
-          <div class="row" style="justify-content:center;margin-top:8px">
-            <button class="btn" id="simFirst">⏮</button>
-            <button class="btn" id="simPrev">◀ 이전</button>
-            <button class="btn primary" id="simNext">다음 ▶</button>
-            <button class="btn" id="simPlay">자동 재생</button>
-          </div>
-          <label class="small muted" style="display:block;text-align:center;margin-top:10px"><input type="checkbox" id="simNumbers"> 돌에 순서 번호 보이기</label>
-          <p class="muted small" style="margin-top:12px">키보드 ← → 로도 넘길 수 있어요. <span style="color:#1e6ae1">●</span> 파란 표시는 눈여겨볼 자리예요.</p>
-        </div>
+    <!-- ② 말의 움직임 -->
+    <section data-panel="pieces" hidden>
+      <p class="muted">말마다 움직이는 방법이 달라요. <span style="color:#1e6ae1">●</span> 파란 점은 갈 수 있는 칸, 파란 동그라미는 잡을 수 있는 상대 말이에요.</p>
+      <div class="pattern-grid" id="pieceGrid"></div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" data-go="check">다음: 체크와 체크메이트 →</button></div>
+    </section>
+
+    <!-- ③ 체크 -->
+    <section data-panel="check" hidden>
+      <p class="muted">체스의 목표는 상대 <b>킹</b>을 잡는 거예요. 빨갛게 빛나는 킹은 공격받고 있다는 뜻이에요.</p>
+      <div class="pattern-grid" id="checkGrid"></div>
+      <div class="card" style="margin-top:16px">
+        <h3>이럴 때도 무승부예요</h3>
+        <ul class="rule-list">
+          <li><span class="num">1</span><div><b>스테일메이트:</b> 내 차례인데 체크는 아니지만, 움직일 수 있는 말이 하나도 없을 때</div></li>
+          <li><span class="num">2</span><div>두 사람 모두 남은 말로는 <b>절대 체크메이트를 할 수 없을 때</b> (예: 킹 대 킹)</div></li>
+          <li><span class="num">3</span><div><b>똑같은 판 모양이 3번</b> 나왔을 때</div></li>
+          <li><span class="num">4</span><div>두 사람이 <b>50수씩</b> 두는 동안 말을 하나도 잡지 않고 폰도 움직이지 않았을 때</div></li>
+        </ul>
       </div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn primary" data-go="special">다음: 특별한 규칙 →</button></div>
     </section>
 
-    <!-- ③ 패턴 -->
-    <section data-panel="patterns" hidden>
-      <p class="muted">오목을 잘 하려면 <b>위험한 모양</b>을 알아야 해요. 내가 만들면 공격, 상대가 만들면 꼭 막아야 해요!</p>
-      <div class="pattern-grid" id="patternGrid"></div>
-    </section>
-
-    <!-- ④ 문제 -->
-    <section data-panel="quiz" hidden>
-      <div class="lesson-layout">
-        <div class="board-wrap"><canvas id="quizBoard"></canvas></div>
-        <div class="card">
-          <div class="row" style="justify-content:space-between">
-            <span class="badge blue" id="quizNo"></span>
-            <span class="small muted" id="quizScore"></span>
-          </div>
-          <h2 id="quizTitle" style="margin-top:10px"></h2>
-          <p id="quizDesc"></p>
-          <div id="quizFeedback"></div>
-          <div class="row" style="margin-top:14px">
-            <button class="btn" id="quizHint">💡 힌트</button>
-            <button class="btn" id="quizRetry">다시 풀기</button>
-          </div>
-          <div class="row" style="margin-top:8px">
-            <button class="btn" id="quizPrev">◀ 이전 문제</button>
-            <button class="btn primary" id="quizNext">다음 문제 ▶</button>
-          </div>
-          <p class="muted small" style="margin-top:12px">나는 <b>흑(검은 돌)</b>이에요. 정답이라고 생각하는 자리를 눌러 보세요.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ⑤ AI -->
-    <section data-panel="ai" hidden>
-      <div class="lesson-layout">
-        <div class="board-wrap"><canvas id="aiBoard"></canvas></div>
-        <div class="card">
-          <h2>컴퓨터와 연습하기</h2>
-          <div class="row">
-            <label>난이도
-              <select id="aiLevel"><option value="easy">쉬움</option><option value="normal">보통</option></select>
-            </label>
-            <label>내 돌
-              <select id="aiColor"><option value="1">흑 (먼저)</option><option value="2">백 (나중)</option></select>
-            </label>
-          </div>
-          <div id="aiMsg" class="turn-msg"></div>
-          <div class="row">
-            <button class="btn primary" id="aiNew">새 게임</button>
-            <button class="btn" id="aiUndo">↩ 무르기</button>
-            <button class="btn" id="aiHint">💡 추천 수</button>
-          </div>
-          <label class="small" style="display:block;margin-top:12px"><input type="checkbox" id="aiWarn" checked> 위험 알림 (상대가 3·4를 만들면 알려주기)</label>
-          <div id="aiWarnBox"></div>
-          <p class="muted small" style="margin-top:12px">연습 게임은 기록에 남지 않아요. 무르기도 마음껏 써 보세요!</p>
-        </div>
-      </div>
+    <!-- ④ 특별한 규칙 -->
+    <section data-panel="special" hidden>
+      <div class="pattern-grid" id="specialGrid"></div>
+      <div class="row" style="justify-content:flex-end;margin-top:16px"><a class="btn primary" href="/student.html">🎮 이제 대전하러 가기 →</a></div>
     </section>
   </main>
 

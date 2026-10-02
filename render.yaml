@@ -1,7 +1,7 @@
 # Render 배포 설정 (Blueprint). Render에서 New → Blueprint 로 이 저장소를 고르면 자동으로 설정돼요.
 services:
   - type: web
-    name: class-omok
+    name: class-chess
     runtime: node
     plan: free
     buildCommand: npm install

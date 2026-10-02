@@ -1,12 +1,13 @@
 {
-  "name": "class-omok",
+  "name": "class-chess",
   "version": "1.0.0",
-  "description": "학급용 오목 대전 사이트 (랜덤 매칭, 리그전, 토너먼트, 교사 모니터링, 게임 방법 학습)",
+  "description": "학급용 체스 대전 사이트 (랜덤 매칭, 리그전, 토너먼트, 교사 모니터링, 게임 방법 학습)",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "chess.js": "^1.4.0",
     "express": "^4.21.2",
     "socket.io": "^4.8.1"
   },
